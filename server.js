@@ -52,8 +52,6 @@ const db = createClient({
 });
 
 async function initDB() {
-  await db.execute("PRAGMA journal_mode = WAL");
-  await db.execute("PRAGMA foreign_keys = ON");
 
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS settings (
