@@ -836,15 +836,8 @@ app.put("/api/admin/settings", requireAdmin, async (req, res) => {
         return res.status(400).json({ error: "صيغة صورة الشعار غير مدعومة." });
       }
 
-      let ext = match[1].toLowerCase();
-      if (ext === "jpeg" || ext === "jpg") ext = "jpg";
-      if (ext === "svg+xml") ext = "svg";
-
-      const filename = `institute-logo-${Date.now()}.${ext}`;
-      const filepath = path.join(uploadsDir, filename);
-
-      fs.writeFileSync(filepath, Buffer.from(match[2], "base64"));
-      logoUrl = `/uploads/${filename}`;
+      // On serverless platforms (like Vercel), store base64 directly in database
+      logoUrl = logoData;
     }
 
     /* Upload new base64 captcha logo */
@@ -855,15 +848,8 @@ app.put("/api/admin/settings", requireAdmin, async (req, res) => {
         return res.status(400).json({ error: "صيغة صورة شعار التحقق غير مدعومة." });
       }
 
-      let ext = match[1].toLowerCase();
-      if (ext === "jpeg" || ext === "jpg") ext = "jpg";
-      if (ext === "svg+xml") ext = "svg";
-
-      const filename = `captcha-logo-${Date.now()}.${ext}`;
-      const filepath = path.join(uploadsDir, filename);
-
-      fs.writeFileSync(filepath, Buffer.from(match[2], "base64"));
-      captchaLogoUrl = `/uploads/${filename}`;
+      // On serverless platforms (like Vercel), store base64 directly in database
+      captchaLogoUrl = captchaLogoData;
     }
 
     const captchaEnabled = req.body.captcha_enabled !== undefined ? (req.body.captcha_enabled ? 1 : 0) : (currentSettings.captcha_enabled ?? 1);
