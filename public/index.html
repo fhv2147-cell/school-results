@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>استعلام نتائج الطلاب</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <main class="page">
+
+    <!-- ==================== STUDENT LOGIN CARD ==================== -->
+    <section id="loginCard" class="login-card card">
+      <div id="logoBox" class="logo-box">🎓</div>
+      
+      <h1 id="instituteName">معهد النتائج</h1>
+      <p class="description">أدخل الرقم الامتحاني والرقم السري للاستعلام عن كشف درجاتك</p>
+
+      <form id="studentForm" onsubmit="return false;">
+        <div class="field">
+          <label for="examNumber">الرقم الامتحاني</label>
+          <input
+            id="examNumber"
+            type="text"
+            inputmode="numeric"
+            autocomplete="username"
+            placeholder="مثال: 2026101"
+            required
+          />
+        </div>
+
+        <div class="field">
+          <label for="password">الرقم السري</label>
+          <input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <!-- Captcha Verification Widget (بوابة اور) -->
+        <div id="captchaCard" class="captcha-card">
+          <div class="captcha-header">
+            <div id="captchaLogo" class="captcha-logo">
+              <svg width="34" height="22" viewBox="0 0 40 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="13" y="2" width="14" height="4" rx="1" fill="#991B1B"/>
+                <rect x="9" y="7" width="22" height="4" rx="1" fill="#B91C1C"/>
+                <rect x="5" y="12" width="30" height="4" rx="1" fill="#DC2626"/>
+                <rect x="2" y="17" width="36" height="7" rx="1.5" fill="#991B1B"/>
+              </svg>
+            </div>
+            <div id="captchaTitle" class="captcha-title">بوابة اور</div>
+          </div>
+
+          <div class="captcha-action-row" id="captchaActionRow" title="انقر للتحقق">
+            <span id="captchaText" class="captcha-text">انا احب العراق</span>
+            <div id="captchaCheckbox" class="captcha-checkbox" role="checkbox" aria-checked="false" tabindex="0">
+              <span class="captcha-check-icon">✓</span>
+              <span class="captcha-spinner"></span>
+            </div>
+          </div>
+
+          <div id="captchaStatus" class="captcha-status hidden"></div>
+        </div>
+
+        <button type="submit" class="primary-btn">
+          <span>🔍 عرض النتيجة</span>
+        </button>
+      </form>
+
+      <p id="message" class="message"></p>
+    </section>
+
+
+    <!-- ==================== OFFICIAL MINISTERIAL STUDENT RESULT CARD ==================== -->
+    <section id="resultSection" class="hidden">
+      
+      <!-- Top Certificate Box (معلومات الطالب والترويسة) -->
+      <div class="ministerial-card">
+        
+        <!-- Three-Part Header: Right Text | Center Emblem | Left Text -->
+        <div class="ministerial-header-grid">
+          <div class="m-header-right" id="headerRightTitle">
+            جمهورية العراق<br>وزارة التربية
+          </div>
+
+          <div class="m-header-center">
+            <div id="resultLogo" class="ministerial-emblem">
+              <svg width="68" height="68" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="46" stroke="#b45309" stroke-width="4" fill="#fef3c7"/>
+                <circle cx="50" cy="50" r="38" stroke="#d97706" stroke-width="2" fill="#15803d"/>
+                <path d="M50 20 L58 36 L76 36 L62 48 L68 66 L50 54 L32 66 L38 48 L24 36 L42 36 Z" fill="#fef08a"/>
+                <text x="50" y="80" text-anchor="middle" font-size="9" font-weight="bold" fill="#78350f">جمهورية العراق</text>
+              </svg>
+            </div>
+          </div>
+
+          <div class="m-header-left" id="headerLeftTitle">
+            اللجنة الدائمة للامتحانات العامة
+          </div>
+        </div>
+
+        <!-- Main Examination Title -->
+        <h2 class="ministerial-exam-title" id="examTitle">
+          نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026
+        </h2>
+
+        <div class="ministerial-divider"></div>
+
+        <!-- Section Title: معلومات الطالب -->
+        <h3 class="ministerial-section-title">معلومات الطالب</h3>
+
+        <!-- 2-Column Info Grid -->
+        <div class="ministerial-info-grid">
+          <div class="m-info-col-right">
+            <div class="m-info-row">
+              <span class="m-label">الاسم:</span>
+              <span class="m-val" id="studentName">-</span>
+            </div>
+            <div class="m-info-row">
+              <span class="m-label">المدرسة:</span>
+              <span class="m-val" id="studentSchool">-</span>
+            </div>
+            <div class="m-info-row">
+              <span class="m-label">المحافظة:</span>
+              <span class="m-val" id="studentGovernorate">-</span>
+            </div>
+            <div class="m-info-row" id="examNumRow">
+              <span class="m-label">الرقم الامتحاني:</span>
+              <span class="m-val" id="studentExam">-</span>
+            </div>
+          </div>
+
+          <div class="m-info-col-left">
+            <div class="m-info-row">
+              <span class="m-label">المجموع الكلي:</span>
+              <span class="m-val" id="studentTotal">0</span>
+            </div>
+            <div class="m-info-row">
+              <span class="m-label">المعدل:</span>
+              <span class="m-val" id="studentAverage">0.00</span>
+            </div>
+            <div class="m-info-row">
+              <span class="m-label">النتيجة النهائية:</span>
+              <span class="m-val status-val" id="studentStatus">ناجح</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Warning Note -->
+        <div class="ministerial-note" id="resultFooterNote">
+          🛡️ يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.
+        </div>
+
+      </div>
+
+      <!-- Bottom Table Box (النتيجة) -->
+      <div class="ministerial-card table-card-margin">
+        <h3 class="ministerial-section-title table-title-margin">النتيجة</h3>
+
+        <div class="ministerial-table-wrap">
+          <table class="ministerial-table">
+            <thead>
+              <tr>
+                <th class="th-subject">المادة</th>
+                <th class="th-grade">الدرجة</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action Buttons (Print & Search another) -->
+      <div class="result-actions-bar no-print">
+        <button type="button" class="action-print-btn" onclick="window.print()">
+          🖨️ طباعة النتيجة الرسمية
+        </button>
+        <button id="logoutStudent" type="button" class="action-search-btn">
+          🚪 استعلام عن نتيجة أخرى
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

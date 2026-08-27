@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم | منصة إدارة نتائج الطلاب</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+</head>
+<body>
+
+<div class="admin-app">
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <section id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="login-icon">🔐</div>
+      <h1>لوحة الإدارة المركزية</h1>
+      <p>أدخل كلمة مرور الإدارة للتحكم بالموقع والنتائج</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="adminPassword">كلمة مرور الإدارة</label>
+          <div class="password-input-wrap">
+            <input
+              id="adminPassword"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+            <button type="button" class="toggle-password" id="toggleLoginPass" title="إظهار / إخفاء">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="primary-btn submit-btn" id="loginBtn">
+          <span>تسجيل الدخول للوحة الإدارة</span>
+        </button>
+      </form>
+
+      <div id="loginMessage" class="message"></div>
+
+      <div class="login-footer">
+        <a href="/" target="_blank" class="preview-link">🔗 الانتقال لواجهة الطلاب</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <section id="dashboard" class="dashboard hidden">
+
+    <!-- Top Header -->
+    <header class="header">
+      <div class="brand">
+        <div id="headerLogo" class="header-logo">🎓</div>
+        <div class="brand-text">
+          <h1 id="headerInstitute">معهد النتائج</h1>
+          <span id="headerPlatform">منصة إدارة النتائج الامتحانية</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="/" target="_blank" class="header-btn preview-btn" title="معاينة واجهة الطلاب">
+          <span>👁️ واجهة الطلاب</span>
+        </a>
+        <button id="logoutBtn" class="header-btn logout-btn" title="تسجيل الخروج">
+          <span>🚪 تسجيل الخروج</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Nav Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="students-tab">
+        <span class="tab-icon">👥</span>
+        <span>إدارة الطلاب والنتائج</span>
+      </button>
+      <button class="tab-btn" data-tab="grades-tab">
+        <span class="tab-icon">📝</span>
+        <span>رصد درجات جديدة</span>
+      </button>
+      <button class="tab-btn" data-tab="settings-tab">
+        <span class="tab-icon">⚙️</span>
+        <span>إعدادات المعهد والشعار</span>
+      </button>
+    </nav>
+
+    <!-- Stats Bar -->
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-icon-bg primary-light">👥</div>
+        <div class="stat-info">
+          <span>إجمالي الطلاب</span>
+          <strong id="studentsCount">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-bg info-light">📊</div>
+        <div class="stat-info">
+          <span>الدرجات المرصودة</span>
+          <strong id="resultsCount">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon-bg success-light">🏆</div>
+        <div class="stat-info">
+          <span>الطلاب الناجحون</span>
+          <strong id="passedCount">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card danger">
+        <div class="stat-icon-bg danger-light">⚠️</div>
+        <div class="stat-info">
+          <span>الطلاب الراسبون</span>
+          <strong id="failedCount">0</strong>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon-bg warning-light">⏳</div>
+        <div class="stat-info">
+          <span>بانتظار النتائج</span>
+          <strong id="pendingCount">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 1: STUDENTS MANAGEMENT -->
+    <div id="students-tab" class="tab-content active">
+      <div class="content-grid">
+
+        <!-- Add Student Panel -->
+        <div class="panel add-student-panel">
+          <div class="panel-header-simple">
+            <div class="badge-num">01</div>
+            <div>
+              <h2>إضافة طالب جديد</h2>
+              <p>سجل بيانات الطالب والرقم الامتحاني والرقم السري</p>
+            </div>
+          </div>
+
+          <form id="studentForm" class="styled-form">
+            <div class="form-group">
+              <label for="fullName">اسم الطالب الكامل <span class="required">*</span></label>
+              <input id="fullName" placeholder="مثال: أحمد علي حسين" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <div class="label-with-action">
+                  <label for="examNumber">الرقم الامتحاني <span class="required">*</span></label>
+                  <button type="button" class="text-action-btn" id="genExamNum">توليد رقم</button>
+                </div>
+                <input id="examNumber" placeholder="مثال: 2026101" required>
+              </div>
+
+              <div class="form-group">
+                <div class="label-with-action">
+                  <label for="studentPassword">الرقم السري للطالب <span class="required">*</span></label>
+                  <button type="button" class="text-action-btn" id="genPass">توليد كود</button>
+                </div>
+                <input id="studentPassword" type="text" placeholder="مثال: 7890" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="stage">المدرسة / المعهد</label>
+                <input id="stage" placeholder="مثال: خارجيون-متوسط أو معهد المتفوقين">
+              </div>
+
+              <div class="form-group">
+                <label for="groupName">المحافظة / الشعبة</label>
+                <input id="groupName" placeholder="مثال: القادسية أو الشعبة A">
+              </div>
+            </div>
+
+            <button class="primary-btn full-btn" type="submit">
+              <span>+ حفظ وإضافة الطالب</span>
+            </button>
+          </form>
+
+          <div id="studentMessage" class="message"></div>
+
+          <!-- Quick Share Card After Add -->
+          <div id="quickShareBox" class="quick-share-box hidden">
+            <div class="quick-share-header">
+              <span>✅ تم تسجيل الطالب بنجاح!</span>
+            </div>
+            <p id="quickShareText" class="quick-share-text"></p>
+            <button type="button" id="copyShareBtn" class="copy-btn">
+              📋 نسخ بيانات الدخول لإرسالها للطالب (واتساب)
+            </button>
+          </div>
+        </div>
+
+        <!-- Students List Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>قائمة الطلاب المسجلين</h2>
+              <p>إدارة الطلاب وكشوف درجاتهم ونسخ بيانات الدخول</p>
+            </div>
+            
+            <div class="search-wrap">
+              <input id="searchStudents" type="search" placeholder="🔍 بحث بالاسم أو الرقم أو المدرسة...">
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>اسم الطالب</th>
+                  <th>الرقم الامتحاني</th>
+                  <th>المدرسة / المحافظة</th>
+                  <th>المواد المرصودة</th>
+                  <th>النتيجة</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="studentsBody"></tbody>
+            </table>
+          </div>
+
+          <div id="emptyStudents" class="empty-state hidden">
+            <div class="empty-icon">👥</div>
+            <h3>لا يوجد طلاب مسجلون حالياً</h3>
+            <p>أضف أول طالب من النموذج الجانبي لبدء رصد النتائج.</p>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: GRADES ENTRY -->
+    <div id="grades-tab" class="tab-content">
+      <div class="content-grid single-col">
+        <div class="panel">
+          <div class="panel-header-simple">
+            <div class="badge-num">02</div>
+            <div>
+              <h2>رصد الدرجات وإضافة المواد</h2>
+              <p>اختر طالباً وأضف درجة مادة منفردة أو رصد عدة مواد</p>
+            </div>
+          </div>
+
+          <form id="resultForm" class="styled-form">
+            <div class="form-group">
+              <label for="resultStudent">اختر الطالب <span class="required">*</span></label>
+              <select id="resultStudent" required>
+                <option value="">-- اختر الطالب المراد رصد درجات له --</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">
+              أدخل درجات المواد للطالب (يمكنك إدخال حتى 10 مواد معاً). اترك حقل المادة فارغاً إذا لم تكن تريد استخدامه.
+            </div>
+
+            <div id="multipleGradesContainer" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+              <!-- JS will inject 10 rows here -->
+            </div>
+            <datalist id="subjectsList">
+              <option value="الاسلامية/العربية">
+              <option value="التربية الإسلامية">
+              <option value="اللغة العربية">
+              <option value="اللغة الإنكليزية">
+              <option value="الرياضيات">
+              <option value="الاجتماعيات">
+              <option value="الأحياء">
+              <option value="الكيمياء">
+              <option value="الفيزياء">
+              <option value="الحاسوب">
+            </datalist>
+
+            <button class="primary-btn" type="submit">
+              <span>+ رصد وحفظ النتيجة</span>
+            </button>
+          </form>
+
+          <div id="resultMessage" class="message"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SETTINGS -->
+    <div id="settings-tab" class="tab-content">
+      <div class="content-grid single-col">
+        <div class="panel settings-panel">
+          <div class="panel-header-simple">
+            <div class="badge-num">03</div>
+            <div>
+              <h2>إعدادات المنصة ونموذج النتيجة الرسمي</h2>
+              <p>تخصيص ترويسة الشهادة الرسمية، الشعار الأوسط، النصوص، وإعدادات الكابتشا</p>
+            </div>
+          </div>
+
+          <form id="settingsForm" class="styled-form">
+            
+            <!-- OFFICIAL MINISTERIAL HEADER CUSTOMIZATION -->
+            <div class="settings-divider" style="margin: 0 0 16px; border-top: none; padding-top: 0;">
+              <h3 style="font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">🏛️ تخصيص ترويسة ونصوص الشهادة الرسمية:</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">التحكم بنص اليمين، نص اليسار، عنوان الامتحان، والشعار الأوسط في كشف درجات الطالب</p>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="headerRightTitle">نص الترويسة الأيمن (سطر أو سطرين)</label>
+                <textarea id="headerRightTitle" rows="2" placeholder="مثال:&#10;جمهورية العراق&#10;وزارة التربية" style="resize: vertical; font-family: inherit; font-size: 13.5px;"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="headerLeftTitle">نص الترويسة الأيسر</label>
+                <textarea id="headerLeftTitle" rows="2" placeholder="مثال:&#10;اللجنة الدائمة للامتحانات العامة" style="resize: vertical; font-family: inherit; font-size: 13.5px;"></textarea>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="examTitle">عنوان الامتحان الرئيسي (أسفل الشعار)</label>
+              <input id="examTitle" placeholder="مثال: نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026">
+            </div>
+
+            <div class="form-group">
+              <label for="resultFooterNote">نص التنبيه أسفل كشف درجات الطالب</label>
+              <input id="resultFooterNote" placeholder="مثال: 🛡️ يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.">
+            </div>
+
+            <!-- EMBLEM / LOGO -->
+            <div class="form-group">
+              <label>الشعار الأوسط للشهادة والمنصة (Emblem / Logo)</label>
+              <div class="logo-uploader-card">
+                <div id="logoPreview" class="logo-preview-box">🎓</div>
+                <div class="logo-uploader-details">
+                  <label class="upload-btn-styled">
+                    📁 اختيار صورة الشعار من الجهاز
+                    <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+                  </label>
+                  <button id="removeLogo" type="button" class="remove-btn-styled">🗑️ حذف الشعار الحالي</button>
+                  <small class="hint">يدعم صور الشعارات والأختام الرسمية PNG, JPG, WEBP, SVG</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 18px; border-top: 1px solid var(--border-color); padding-top: 18px;">
+              <div class="form-group">
+                <label for="instituteName">اسم المنصة / المعهد <span class="required">*</span></label>
+                <input id="instituteName" placeholder="مثال: معهد المتفوقين النموذجي" required>
+              </div>
+
+              <div class="form-group">
+                <label for="platformName">عنوان المنصة الفرعي</label>
+                <input id="platformName" placeholder="مثال: منصة النتائج والامتحانات الرسمية">
+              </div>
+            </div>
+
+            <!-- CAPTCHA CUSTOMIZATION -->
+            <div class="settings-divider" style="margin: 24px 0 18px; border-top: 1px solid var(--border-color); padding-top: 18px;">
+              <h3 style="font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">🛡️ تخصيص مربع التحقق (الكابتشا):</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">التحكم بالنص والشعار لمربع التحقق الذي يظهر للطالب قبل عرض النتيجة</p>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="captchaEnabled" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <span style="font-weight: 700; font-size: 14px;">تفعيل مربع التحقق الأمني في واجهة الطلاب</span>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="captchaText">نص التحقق بجانب المربع</label>
+                <input id="captchaText" placeholder="مثال: انا احب العراق أو أنا لست برنامج روبوت">
+              </div>
+
+              <div class="form-group">
+                <label for="captchaTitle">العنوان أعلى الشعار المصغر</label>
+                <input id="captchaTitle" placeholder="مثال: بوابة اور أو منظومة التحقق">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>الشعار المصغر لمربع التحقق</label>
+              <div class="logo-uploader-card">
+                <div id="captchaLogoPreview" class="logo-preview-box" style="height: 60px; width: 80px;">🏛️</div>
+                <div class="logo-uploader-details">
+                  <label class="upload-btn-styled">
+                    📁 اختيار صورة الشعار المصغر
+                    <input id="captchaLogoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+                  </label>
+                  <button id="removeCaptchaLogo" type="button" class="remove-btn-styled">🗑️ حذف الشعار والعودة للافتراضي</button>
+                  <small class="hint">يدعم صيغ PNG, JPG, WEBP, SVG</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button class="primary-btn save-settings-btn" type="submit">
+                <span>💾 حفظ التغييرات وتحديث الموقع</span>
+              </button>
+            </div>
+          </form>
+
+          <div id="settingsMessage" class="message"></div>
+
+          <!-- Links info box -->
+          <div class="links-info-card">
+            <h3>📌 روابط الوصول السريعة:</h3>
+            <div class="link-item">
+              <span>🌐 رابط واجهة الطلاب العامة:</span>
+              <code id="publicUrlText">/</code>
+              <button type="button" class="copy-small-btn" onclick="copyText(window.location.origin)">نسخ</button>
+            </div>
+            <div class="link-item">
+              <span>🔐 رابط لوحة الإدارة:</span>
+              <code id="adminUrlText">/admin</code>
+              <button type="button" class="copy-small-btn" onclick="copyText(window.location.origin + '/admin')">نسخ</button>
+            </div>
+          </div>
+
+          <!-- Backup Database card -->
+          <div class="links-info-card" style="margin-top: 18px; border-color: var(--primary-border); background: #f0f7ff;">
+            <h3>💾 النسخ الاحتياطي لقاعدة البيانات:</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">يمكنك تنزيل نسخة كاملة من قاعدة بيانات الطلاب والدرجات والاحتفاظ بها على جهازك بأي وقت.</p>
+            <a href="/api/admin/backup" target="_blank" class="action-outline-btn" style="text-decoration: none; display: inline-flex; background: #ffffff;">
+              📥 تنزيل نسخة احتياطية (results.db)
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+
+<!-- ==================== MODAL: STUDENT RESULTS ==================== -->
+<div id="resultsModal" class="modal hidden">
+  <div class="modal-box modal-lg">
+    <div class="modal-header">
+      <div class="modal-student-banner">
+        <div class="modal-student-avatar">🎓</div>
+        <div>
+          <h2 id="modalStudentName">كشف درجات الطالب</h2>
+          <div class="modal-student-meta">
+            <span id="modalStudentExam">الرقم الامتحاني: -</span>
+            <span id="modalStudentStage">المرحلة: -</span>
+            <span id="modalStudentGroup">الشعبة: -</span>
+          </div>
+        </div>
+      </div>
+      <button id="closeModal" class="close-btn" title="إغلاق">&times;</button>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="modal-summary-bar">
+      <div class="summary-metric">
+        <span>المجموع الكلي</span>
+        <strong id="modalTotalGrade">0 / 0</strong>
+      </div>
+      <div class="summary-metric">
+        <span>المعدل المئوي</span>
+        <strong id="modalAverage">0%</strong>
+      </div>
+      <div class="summary-metric">
+        <span>الحالة النهائية</span>
+        <span id="modalStatusBadge" class="status-badge-lg status-pending">بانتظار النتائج</span>
+      </div>
+    </div>
+
+    <!-- Quick Add Grade Inside Modal -->
+    <div class="modal-add-grade">
+      <h4>➕ إضافة مادة ودرجة جديدة لهذا الطالب</h4>
+      <form id="modalAddGradeForm" class="modal-inline-form">
+        <input id="modalSubject" placeholder="اسم المادة (مثال: الفيزياء)" required list="subjectsList">
+        <input id="modalGrade" type="number" min="0" step="0.5" placeholder="الدرجة (مثال: 92)" required>
+        <input id="modalMaxGrade" type="number" min="1" step="0.5" value="100" placeholder="من 100" required>
+        <button type="submit" class="primary-btn inline-btn">+ إضافة</button>
+      </form>
+    </div>
+
+    <!-- Results Table -->
+    <div class="modal-results-wrap">
+      <h4>📑 قائمة المواد المرصودة:</h4>
+      <div id="modalResultsList" class="modal-results-list"></div>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="modal-footer-actions">
+      <button id="copyReportBtn" class="action-outline-btn">
+        📋 نسخ تقرير النتيجة (للواتساب)
+      </button>
+      <button id="printReportBtn" class="action-outline-btn">
+        🖨️ طباعة النتيجة
+      </button>
+      <button id="clearAllGradesBtn" class="action-danger-btn">
+        🗑️ مسح كل الدرجات
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL: EDIT STUDENT ==================== -->
+<div id="editModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✏️ تعديل بيانات الطالب</h2>
+      <button id="closeEditModal" class="close-btn" title="إغلاق">&times;</button>
+    </div>
+
+    <form id="editForm" class="styled-form">
+      <input id="editStudentId" type="hidden">
+
+      <div class="form-group">
+        <label for="editFullName">اسم الطالب <span class="required">*</span></label>
+        <input id="editFullName" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editExamNumber">الرقم الامتحاني <span class="required">*</span></label>
+          <input id="editExamNumber" required>
+        </div>
+
+        <div class="form-group">
+          <label for="editPassword">رقم سري جديد (اختياري)</label>
+          <input id="editPassword" type="text" placeholder="اتركه فارغاً للإبقاء على القديم">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editStage">المدرسة / المعهد</label>
+          <input id="editStage" placeholder="مثال: خارجيون-متوسط">
+        </div>
+
+        <div class="form-group">
+          <label for="editGroup">المحافظة / الشعبة</label>
+          <input id="editGroup" placeholder="مثال: القادسية">
+        </div>
+      </div>
+
+      <button class="primary-btn full-btn" type="submit">
+        <span>💾 حفظ التعديلات</span>
+      </button>
+    </form>
+
+    <div id="editMessage" class="message"></div>
+  </div>
+</div>
+
+
+<!-- Toast Notifications Container -->
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="/admin/app.js"></script>
+</body>
+</html>
