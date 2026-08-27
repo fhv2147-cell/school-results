@@ -207,8 +207,39 @@ function cleanText(value, max = 200) {
   return String(value ?? "").trim().slice(0, max);
 }
 
+function getAdminToken(req) {
+  return req.headers["x-admin-token"] || req.headers["authorization"]?.replace("Bearer ", "") || "";
+}
+
+function verifyAdmin(req) {
+  if (req.session && req.session.isAdmin) return true;
+  const token = getAdminToken(req);
+  if (token) {
+    try {
+      const secret = process.env.SESSION_SECRET || "fallback_secret";
+      const parts = token.split(".");
+      if (parts.length === 2) {
+        const [time, sign] = parts;
+        // Simple hash validation
+        const expectedSign = Buffer.from(time + secret).toString("base64url");
+        if (sign === expectedSign && Date.now() - Number(time) < 1000 * 60 * 60 * 24 * 7) { // 7 days
+          return true;
+        }
+      }
+    } catch (e) {}
+  }
+  return false;
+}
+
+function generateAdminToken() {
+  const secret = process.env.SESSION_SECRET || "fallback_secret";
+  const time = Date.now().toString();
+  const sign = Buffer.from(time + secret).toString("base64url");
+  return `${time}.${sign}`;
+}
+
 function requireAdmin(req, res, next) {
-  if (!req.session.isAdmin) {
+  if (!verifyAdmin(req)) {
     return res.status(401).json({ error: "جلسة الإدارة منتهية أو غير مصرح." });
   }
   next();
@@ -367,11 +398,9 @@ app.post("/api/admin/login", adminLoginLimiter, async (req, res) => {
     }
 
     req.session.isAdmin = true;
+    const token = generateAdminToken();
     req.session.save((err) => {
-      if (err) {
-        return res.status(500).json({ error: "تعذر حفظ الجلسة." });
-      }
-      res.json({ success: true });
+      res.json({ success: true, token: token });
     });
   } catch (error) {
     console.error("Admin login error:", error);
@@ -380,7 +409,7 @@ app.post("/api/admin/login", adminLoginLimiter, async (req, res) => {
 });
 
 app.get("/api/admin/me", (req, res) => {
-  res.json({ isAdmin: Boolean(req.session && req.session.isAdmin) });
+  res.json({ isAdmin: verifyAdmin(req) });
 });
 
 app.post("/api/admin/logout", requireAdmin, (req, res) => {

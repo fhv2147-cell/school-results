@@ -131,8 +131,15 @@ async function loadSettings() {
     localStorage.setItem("platform_settings_cache", JSON.stringify(settings));
     applySettingsToDOM(settings);
 
+    if (loginCard) {
+      loginCard.style.opacity = "1";
+    }
+
   } catch (error) {
-    console.error("Error loading settings:", error);
+    console.error("Failed to load platform settings:", error);
+    if (loginCard) {
+      loginCard.style.opacity = "1";
+    }
   }
 }
 

@@ -16,10 +16,12 @@ let removeLogoFlag = false;
 ========================================================= */
 
 async function api(url, options = {}) {
+  const token = localStorage.getItem("admin_auth_token") || "";
   const response = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { "x-admin-token": token } : {}),
       ...(options.headers || {})
     }
   });
@@ -27,6 +29,10 @@ async function api(url, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    if (response.status === 401 && !url.includes("/api/admin/login")) {
+      localStorage.removeItem("admin_auth_token");
+      showLogin();
+    }
     throw new Error(data.error || "حدث خطأ أثناء الاتصال بالخادم.");
   }
 
@@ -117,10 +123,14 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
   button.disabled = true;
 
   try {
-    await api("/api/admin/login", {
+    const res = await api("/api/admin/login", {
       method: "POST",
       body: JSON.stringify({ password: passInput.value })
     });
+
+    if (res.token) {
+      localStorage.setItem("admin_auth_token", res.token);
+    }
 
     message.textContent = "";
     passInput.value = "";
@@ -146,6 +156,7 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 
   try {
     await api("/api/admin/logout", { method: "POST" });
+    localStorage.removeItem("admin_auth_token");
     showLogin();
     showToast("تم تسجيل الخروج بنجاح.", "info");
   } catch (error) {
