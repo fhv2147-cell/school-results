@@ -170,25 +170,28 @@ await initDB();
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-/* Disable caching for all API responses so updates appear immediately */
-app.use("/api", (req, res, next) => {
+/* Disable caching for all API responses and ensure DB is initialized */
+app.use("/api", async (req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
+  try {
+    if (!dbInitialized) await initDB();
+  } catch (e) {}
   next();
 });
 
 app.use(
   session({
     name: "results_admin_session",
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "default_secret_key_najaha_2026",
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       sameSite: "lax",
       secure: false,
-      maxAge: 1000 * 60 * 60 * 12 // 12 hours
+      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
     }
   })
 );
@@ -583,7 +586,7 @@ app.post("/api/admin/students", requireAdmin, async (req, res) => {
 
   } catch (error) {
     console.error("Add student error:", error);
-    res.status(500).json({ error: "تعذر إضافة الطالب." });
+    res.status(500).json({ error: error.message || "تعذر إضافة الطالب." });
   }
 });
 
@@ -643,7 +646,7 @@ app.put("/api/admin/students/:id", requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Update student error:", error);
-    res.status(500).json({ error: "تعذر تعديل بيانات الطالب." });
+    res.status(500).json({ error: error.message || "تعذر تعديل بيانات الطالب." });
   }
 });
 
@@ -942,7 +945,7 @@ app.put("/api/admin/settings", requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error("Update settings error:", error);
-    res.status(500).json({ error: "تعذر حفظ الإعدادات." });
+    res.status(500).json({ error: error.message || "تعذر حفظ الإعدادات." });
   }
 });
 
