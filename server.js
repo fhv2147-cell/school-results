@@ -46,104 +46,118 @@ if (process.env.PROJECT_DOMAIN) {
   dbPath = process.env.DB_PATH;
 }
 
+const tursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim();
+const tursoToken = (process.env.TURSO_AUTH_TOKEN || "").trim();
+
 const db = createClient({
-  url: process.env.TURSO_DATABASE_URL || ("file:" + dbPath),
-  authToken: process.env.TURSO_AUTH_TOKEN
+  url: tursoUrl,
+  authToken: tursoToken || undefined
 });
 
+let dbInitialized = false;
 async function initDB() {
-
-  await db.executeMultiple(`
-    CREATE TABLE IF NOT EXISTS settings (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      institute_name TEXT NOT NULL DEFAULT 'معهد النتائج',
-      platform_name TEXT NOT NULL DEFAULT 'منصة النتائج الامتحانية',
-      logo_url TEXT DEFAULT '',
-      primary_color TEXT DEFAULT '#111827'
-    );
-
-    CREATE TABLE IF NOT EXISTS students (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      exam_number TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      plain_password TEXT DEFAULT '',
-      full_name TEXT NOT NULL,
-      stage TEXT DEFAULT '',
-      group_name TEXT DEFAULT '',
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS results (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      student_id INTEGER NOT NULL,
-      subject TEXT NOT NULL,
-      grade REAL NOT NULL,
-      max_grade REAL NOT NULL DEFAULT 100,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
-    );
-  `);
-
-  /* Migration: Ensure columns exist */
+  if (dbInitialized) return;
   try {
-    const settingsColsRes = await db.execute("PRAGMA table_info(settings)");
-    const settingsCols = settingsColsRes.rows;
-    if (!settingsCols.some(col => col.name === "platform_name")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN platform_name TEXT DEFAULT 'منصة النتائج الامتحانية'");
-    }
-    if (!settingsCols.some(col => col.name === "captcha_enabled")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN captcha_enabled INTEGER DEFAULT 1");
-    }
-    if (!settingsCols.some(col => col.name === "captcha_title")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN captcha_title TEXT DEFAULT 'بوابة اور'");
-    }
-    if (!settingsCols.some(col => col.name === "captcha_text")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN captcha_text TEXT DEFAULT 'انا احب العراق'");
-    }
-    if (!settingsCols.some(col => col.name === "captcha_logo_url")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN captcha_logo_url TEXT DEFAULT ''");
-    }
-    if (!settingsCols.some(col => col.name === "header_right_title")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية'");
-    }
-    if (!settingsCols.some(col => col.name === "header_left_title")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة'");
-    }
-    if (!settingsCols.some(col => col.name === "exam_title")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026'");
-    }
-    if (!settingsCols.some(col => col.name === "result_footer_note")) {
-      await db.executeMultiple("ALTER TABLE settings ADD COLUMN result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'");
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        institute_name TEXT NOT NULL DEFAULT 'معهد النتائج',
+        platform_name TEXT NOT NULL DEFAULT 'منصة النتائج الامتحانية',
+        logo_url TEXT DEFAULT '',
+        primary_color TEXT DEFAULT '#111827'
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exam_number TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        plain_password TEXT DEFAULT '',
+        full_name TEXT NOT NULL,
+        stage TEXT DEFAULT '',
+        group_name TEXT DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        subject TEXT NOT NULL,
+        grade REAL NOT NULL,
+        max_grade REAL NOT NULL DEFAULT 100,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+      )
+    `);
+
+    /* Migration: Ensure columns exist */
+    try {
+      const settingsColsRes = await db.execute("PRAGMA table_info(settings)");
+      const settingsCols = settingsColsRes.rows || [];
+      if (!settingsCols.some(col => col.name === "platform_name")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN platform_name TEXT DEFAULT 'منصة النتائج الامتحانية'");
+      }
+      if (!settingsCols.some(col => col.name === "captcha_enabled")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN captcha_enabled INTEGER DEFAULT 1");
+      }
+      if (!settingsCols.some(col => col.name === "captcha_title")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN captcha_title TEXT DEFAULT 'بوابة اور'");
+      }
+      if (!settingsCols.some(col => col.name === "captcha_text")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN captcha_text TEXT DEFAULT 'انا احب العراق'");
+      }
+      if (!settingsCols.some(col => col.name === "captcha_logo_url")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN captcha_logo_url TEXT DEFAULT ''");
+      }
+      if (!settingsCols.some(col => col.name === "header_right_title")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية'");
+      }
+      if (!settingsCols.some(col => col.name === "header_left_title")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة'");
+      }
+      if (!settingsCols.some(col => col.name === "exam_title")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026'");
+      }
+      if (!settingsCols.some(col => col.name === "result_footer_note")) {
+        await db.execute("ALTER TABLE settings ADD COLUMN result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'");
+      }
+
+      const studentColsRes = await db.execute("PRAGMA table_info(students)");
+      const studentCols = studentColsRes.rows || [];
+      if (!studentCols.some(col => col.name === "plain_password")) {
+        await db.execute("ALTER TABLE students ADD COLUMN plain_password TEXT DEFAULT ''");
+      }
+      if (!studentCols.some(col => col.name === "school_name")) {
+        await db.execute("ALTER TABLE students ADD COLUMN school_name TEXT DEFAULT ''");
+      }
+      if (!studentCols.some(col => col.name === "governorate")) {
+        await db.execute("ALTER TABLE students ADD COLUMN governorate TEXT DEFAULT ''");
+      }
+    } catch (e) {
+      console.error("Migration error:", e);
     }
 
-    const studentColsRes = await db.execute("PRAGMA table_info(students)");
-    const studentCols = studentColsRes.rows;
-    if (!studentCols.some(col => col.name === "plain_password")) {
-      await db.executeMultiple("ALTER TABLE students ADD COLUMN plain_password TEXT DEFAULT ''");
+    /* Ensure default settings row exists */
+    const settingsExists = (await db.execute({ sql: "SELECT id FROM settings WHERE id = 1", args: [] })).rows[0];
+    if (!settingsExists) {
+      await db.execute({
+        sql: `
+          INSERT INTO settings (id, institute_name, platform_name, logo_url, primary_color)
+          VALUES (1, ?, ?, '', '#111827')
+        `,
+        args: [
+          process.env.INSTITUTE_NAME || "معهد النتائج",
+          process.env.PLATFORM_NAME || "منصة النتائج الامتحانية"
+        ]
+      });
     }
-    if (!studentCols.some(col => col.name === "school_name")) {
-      await db.executeMultiple("ALTER TABLE students ADD COLUMN school_name TEXT DEFAULT ''");
-    }
-    if (!studentCols.some(col => col.name === "governorate")) {
-      await db.executeMultiple("ALTER TABLE students ADD COLUMN governorate TEXT DEFAULT ''");
-    }
-  } catch (e) {
-    console.error("Migration error:", e);
-  }
 
-  /* Ensure default settings row exists */
-  const settingsExists = (await db.execute({ sql: "SELECT id FROM settings WHERE id = 1", args: [] })).rows[0];
-  if (!settingsExists) {
-    await db.execute({
-      sql: `
-        INSERT INTO settings (id, institute_name, platform_name, logo_url, primary_color)
-        VALUES (1, ?, ?, '', '#111827')
-      `,
-      args: [
-        process.env.INSTITUTE_NAME || "معهد النتائج",
-        process.env.PLATFORM_NAME || "منصة النتائج الامتحانية"
-      ]
-    });
+    dbInitialized = true;
+  } catch (err) {
+    console.error("DB Initialization error:", err);
   }
 }
 
