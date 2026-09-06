@@ -393,7 +393,7 @@ document.getElementById("studentForm").addEventListener("submit", async (event) 
 
 /* Copy student credentials from table */
 function copyStudentCredentials(studentId) {
-  const student = studentsCache.find(s => s.id === studentId);
+  const student = studentsCache.find(s => Number(s.id) === Number(studentId) || s.id == studentId);
   if (!student) return;
 
   const platformUrl = window.location.origin;
@@ -414,7 +414,7 @@ function copyStudentCredentials(studentId) {
 
 /* Delete Student */
 async function deleteStudent(studentId) {
-  const student = studentsCache.find(s => s.id === studentId);
+  const student = studentsCache.find(s => Number(s.id) === Number(studentId) || s.id == studentId);
   if (!student) return;
 
   const ok = confirm(`هل أنت متأكد من حذف الطالب "${student.full_name}"؟\nسيتم مسح كافة درجاته من النظام.`);
@@ -432,7 +432,7 @@ async function deleteStudent(studentId) {
 
 /* Edit Student Modal */
 function openEditStudent(studentId) {
-  const student = studentsCache.find(s => s.id === studentId);
+  const student = studentsCache.find(s => Number(s.id) === Number(studentId) || s.id == studentId);
   if (!student) return;
 
   document.getElementById("editStudentId").value = student.id;
@@ -445,6 +445,13 @@ function openEditStudent(studentId) {
 
   document.getElementById("editModal").classList.remove("hidden");
 }
+
+window.copyStudentCredentials = copyStudentCredentials;
+window.deleteStudent = deleteStudent;
+window.openEditStudent = openEditStudent;
+window.openStudentResults = openStudentResults;
+window.deleteModalGrade = deleteModalGrade;
+window.clearAllStudentGrades = clearAllStudentGrades;
 
 document.getElementById("closeEditModal").addEventListener("click", () => {
   document.getElementById("editModal").classList.add("hidden");
