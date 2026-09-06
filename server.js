@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import session from "express-session";
 import bcrypt from "bcryptjs";
-import { createClient } from "@libsql/client";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
@@ -46,13 +45,59 @@ if (process.env.PROJECT_DOMAIN) {
   dbPath = process.env.DB_PATH;
 }
 
-const tursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim();
+const rawTursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim();
 const tursoToken = (process.env.TURSO_AUTH_TOKEN || "").trim();
+const httpTursoUrl = rawTursoUrl.replace(/^libsql:\/\//i, "https://").replace(/\/$/, "") + "/v2/pipeline";
 
-const db = createClient({
-  url: tursoUrl,
-  authToken: tursoToken || undefined
-});
+const db = {
+  async execute(arg) {
+    const sql = typeof arg === "string" ? arg : arg.sql;
+    const args = typeof arg === "string" ? [] : (arg.args || []);
+
+    const params = args.map(a => {
+      if (typeof a === "number") return { type: "float", value: a };
+      if (typeof a === "string") return { type: "text", value: a };
+      if (typeof a === "boolean") return { type: "integer", value: a ? 1 : 0 };
+      if (a === null || a === undefined) return { type: "null" };
+      return { type: "text", value: String(a) };
+    });
+
+    const response = await fetch(httpTursoUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + tursoToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        requests: [
+          { type: "execute", stmt: { sql, args: params } }
+        ]
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+    const res = data.results?.[0];
+    if (!res || res.type === "error") {
+      throw new Error(res?.error?.message || "Database error: " + response.status);
+    }
+
+    const execResult = res.response?.result;
+    const cols = execResult?.cols?.map(c => c.name) || [];
+    const rows = (execResult?.rows || []).map(row => {
+      const obj = {};
+      cols.forEach((colName, idx) => {
+        obj[colName] = row[idx]?.value;
+      });
+      return obj;
+    });
+
+    return {
+      rows,
+      rowsAffected: execResult?.affected_row_count || 0,
+      lastInsertRowid: execResult?.last_insert_rowid ? Number(execResult.last_insert_rowid) : undefined
+    };
+  }
+};
 
 let dbInitialized = false;
 async function initDB() {
