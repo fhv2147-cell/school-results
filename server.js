@@ -58,39 +58,66 @@ let dbInitialized = false;
 async function initDB() {
   if (dbInitialized) return;
   try {
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS settings (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        institute_name TEXT NOT NULL DEFAULT 'معهد النتائج',
-        platform_name TEXT NOT NULL DEFAULT 'منصة النتائج الامتحانية',
-        logo_url TEXT DEFAULT '',
-        primary_color TEXT DEFAULT '#111827',
-        captcha_enabled INTEGER DEFAULT 1,
-        captcha_title TEXT DEFAULT 'بوابة اور',
-        captcha_text TEXT DEFAULT 'انا احب العراق',
-        captcha_logo_url TEXT DEFAULT '',
-        header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية',
-        header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة',
-        exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026',
-        result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'
-      )
-    `);
+    // 1. Settings table
+    try {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          institute_name TEXT NOT NULL DEFAULT 'معهد النتائج',
+          platform_name TEXT NOT NULL DEFAULT 'منصة النتائج الامتحانية',
+          logo_url TEXT DEFAULT '',
+          primary_color TEXT DEFAULT '#111827',
+          captcha_enabled INTEGER DEFAULT 1,
+          captcha_title TEXT DEFAULT 'بوابة اور',
+          captcha_text TEXT DEFAULT 'انا احب العراق',
+          captcha_logo_url TEXT DEFAULT '',
+          header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية',
+          header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة',
+          exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026',
+          result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'
+        )
+      `);
+    } catch (e) {}
 
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS students (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        exam_number TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
-        plain_password TEXT DEFAULT '',
-        full_name TEXT NOT NULL,
-        school_name TEXT DEFAULT '',
-        governorate TEXT DEFAULT '',
-        stage TEXT DEFAULT '',
-        group_name TEXT DEFAULT '',
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    // 2. Students table
+    try {
+      const studentCountRes = await db.execute("SELECT COUNT(*) as count FROM students");
+      const sCount = Number(studentCountRes.rows[0]?.count || 0);
+      if (sCount === 0) {
+        await db.execute("DROP TABLE IF EXISTS students");
+        await db.execute(`
+          CREATE TABLE students (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            exam_number TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            plain_password TEXT DEFAULT '',
+            full_name TEXT NOT NULL,
+            school_name TEXT DEFAULT '',
+            governorate TEXT DEFAULT '',
+            stage TEXT DEFAULT '',
+            group_name TEXT DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+      }
+    } catch (e) {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS students (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          exam_number TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          plain_password TEXT DEFAULT '',
+          full_name TEXT NOT NULL,
+          school_name TEXT DEFAULT '',
+          governorate TEXT DEFAULT '',
+          stage TEXT DEFAULT '',
+          group_name TEXT DEFAULT '',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
 
+    // 3. Results table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS results (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,6 +130,7 @@ async function initDB() {
       )
     `);
 
+    // 4. Safe Alter columns if table had existing data
     const alterQueries = [
       "ALTER TABLE settings ADD COLUMN platform_name TEXT DEFAULT 'منصة النتائج الامتحانية'",
       "ALTER TABLE settings ADD COLUMN captcha_enabled INTEGER DEFAULT 1",
@@ -124,7 +152,7 @@ async function initDB() {
       try { await db.execute(q); } catch (e) {}
     }
 
-    /* Ensure default settings row exists */
+    // 5. Ensure default settings row exists
     const settingsExists = (await db.execute({ sql: "SELECT id FROM settings WHERE id = 1", args: [] })).rows[0];
     if (!settingsExists) {
       await db.execute({
