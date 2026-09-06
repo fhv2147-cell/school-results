@@ -45,8 +45,21 @@ if (process.env.PROJECT_DOMAIN) {
   dbPath = process.env.DB_PATH;
 }
 
-const rawTursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim().replace(/^['"]|['"]$/g, "");
-const tursoToken = (process.env.TURSO_AUTH_TOKEN || "").trim().replace(/^['"]|['"]$/g, "");
+let rawTursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim().replace(/^['"]|['"]$/g, "");
+let tursoToken = (process.env.TURSO_AUTH_TOKEN || "").trim().replace(/^['"]|['"]$/g, "");
+
+// Auto-fix if user swapped TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Vercel
+if (tursoToken.startsWith("libsql://") || tursoToken.startsWith("https://") || tursoToken.startsWith("http://")) {
+  const temp = rawTursoUrl;
+  rawTursoUrl = tursoToken;
+  tursoToken = temp;
+}
+if (rawTursoUrl.startsWith("eyJ")) {
+  const temp = tursoToken;
+  tursoToken = rawTursoUrl;
+  rawTursoUrl = temp;
+}
+
 const httpTursoUrl = (rawTursoUrl.startsWith("http") ? rawTursoUrl : rawTursoUrl.replace(/^libsql:\/\//i, "https://")).replace(/\/$/, "") + "/v2/pipeline";
 
 const db = {
