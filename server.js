@@ -64,7 +64,15 @@ async function initDB() {
         institute_name TEXT NOT NULL DEFAULT 'معهد النتائج',
         platform_name TEXT NOT NULL DEFAULT 'منصة النتائج الامتحانية',
         logo_url TEXT DEFAULT '',
-        primary_color TEXT DEFAULT '#111827'
+        primary_color TEXT DEFAULT '#111827',
+        captcha_enabled INTEGER DEFAULT 1,
+        captcha_title TEXT DEFAULT 'بوابة اور',
+        captcha_text TEXT DEFAULT 'انا احب العراق',
+        captcha_logo_url TEXT DEFAULT '',
+        header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية',
+        header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة',
+        exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026',
+        result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'
       )
     `);
 
@@ -75,6 +83,8 @@ async function initDB() {
         password_hash TEXT NOT NULL,
         plain_password TEXT DEFAULT '',
         full_name TEXT NOT NULL,
+        school_name TEXT DEFAULT '',
+        governorate TEXT DEFAULT '',
         stage TEXT DEFAULT '',
         group_name TEXT DEFAULT '',
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -93,51 +103,25 @@ async function initDB() {
       )
     `);
 
-    /* Migration: Ensure columns exist */
-    try {
-      const settingsColsRes = await db.execute("PRAGMA table_info(settings)");
-      const settingsCols = settingsColsRes.rows || [];
-      if (!settingsCols.some(col => col.name === "platform_name")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN platform_name TEXT DEFAULT 'منصة النتائج الامتحانية'");
-      }
-      if (!settingsCols.some(col => col.name === "captcha_enabled")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN captcha_enabled INTEGER DEFAULT 1");
-      }
-      if (!settingsCols.some(col => col.name === "captcha_title")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN captcha_title TEXT DEFAULT 'بوابة اور'");
-      }
-      if (!settingsCols.some(col => col.name === "captcha_text")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN captcha_text TEXT DEFAULT 'انا احب العراق'");
-      }
-      if (!settingsCols.some(col => col.name === "captcha_logo_url")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN captcha_logo_url TEXT DEFAULT ''");
-      }
-      if (!settingsCols.some(col => col.name === "header_right_title")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية'");
-      }
-      if (!settingsCols.some(col => col.name === "header_left_title")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة'");
-      }
-      if (!settingsCols.some(col => col.name === "exam_title")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026'");
-      }
-      if (!settingsCols.some(col => col.name === "result_footer_note")) {
-        await db.execute("ALTER TABLE settings ADD COLUMN result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'");
-      }
+    const alterQueries = [
+      "ALTER TABLE settings ADD COLUMN platform_name TEXT DEFAULT 'منصة النتائج الامتحانية'",
+      "ALTER TABLE settings ADD COLUMN captcha_enabled INTEGER DEFAULT 1",
+      "ALTER TABLE settings ADD COLUMN captcha_title TEXT DEFAULT 'بوابة اور'",
+      "ALTER TABLE settings ADD COLUMN captcha_text TEXT DEFAULT 'انا احب العراق'",
+      "ALTER TABLE settings ADD COLUMN captcha_logo_url TEXT DEFAULT ''",
+      "ALTER TABLE settings ADD COLUMN header_right_title TEXT DEFAULT 'جمهورية العراق\nوزارة التربية'",
+      "ALTER TABLE settings ADD COLUMN header_left_title TEXT DEFAULT 'اللجنة الدائمة للامتحانات العامة'",
+      "ALTER TABLE settings ADD COLUMN exam_title TEXT DEFAULT 'نتائج الامتحانات العامة الدور الأول لعام 2025 - 2026'",
+      "ALTER TABLE settings ADD COLUMN result_footer_note TEXT DEFAULT 'يُعد هذا تبليغاً بنتيجة الطالب فقط، ولا يُعتبر وثيقة رسمية معتمدة لأي غرض كان.'",
+      "ALTER TABLE students ADD COLUMN plain_password TEXT DEFAULT ''",
+      "ALTER TABLE students ADD COLUMN school_name TEXT DEFAULT ''",
+      "ALTER TABLE students ADD COLUMN governorate TEXT DEFAULT ''",
+      "ALTER TABLE students ADD COLUMN stage TEXT DEFAULT ''",
+      "ALTER TABLE students ADD COLUMN group_name TEXT DEFAULT ''"
+    ];
 
-      const studentColsRes = await db.execute("PRAGMA table_info(students)");
-      const studentCols = studentColsRes.rows || [];
-      if (!studentCols.some(col => col.name === "plain_password")) {
-        await db.execute("ALTER TABLE students ADD COLUMN plain_password TEXT DEFAULT ''");
-      }
-      if (!studentCols.some(col => col.name === "school_name")) {
-        await db.execute("ALTER TABLE students ADD COLUMN school_name TEXT DEFAULT ''");
-      }
-      if (!studentCols.some(col => col.name === "governorate")) {
-        await db.execute("ALTER TABLE students ADD COLUMN governorate TEXT DEFAULT ''");
-      }
-    } catch (e) {
-      console.error("Migration error:", e);
+    for (const q of alterQueries) {
+      try { await db.execute(q); } catch (e) {}
     }
 
     /* Ensure default settings row exists */
