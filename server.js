@@ -45,9 +45,9 @@ if (process.env.PROJECT_DOMAIN) {
   dbPath = process.env.DB_PATH;
 }
 
-const rawTursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim();
-const tursoToken = (process.env.TURSO_AUTH_TOKEN || "").trim();
-const httpTursoUrl = rawTursoUrl.replace(/^libsql:\/\//i, "https://").replace(/\/$/, "") + "/v2/pipeline";
+const rawTursoUrl = (process.env.TURSO_DATABASE_URL || ("file:" + dbPath)).trim().replace(/^['"]|['"]$/g, "");
+const tursoToken = (process.env.TURSO_AUTH_TOKEN || "").trim().replace(/^['"]|['"]$/g, "");
+const httpTursoUrl = (rawTursoUrl.startsWith("http") ? rawTursoUrl : rawTursoUrl.replace(/^libsql:\/\//i, "https://")).replace(/\/$/, "") + "/v2/pipeline";
 
 const db = {
   async execute(arg) {
@@ -55,10 +55,11 @@ const db = {
     const args = typeof arg === "string" ? [] : (arg.args || []);
 
     const params = args.map(a => {
-      if (typeof a === "number") return { type: "float", value: a };
-      if (typeof a === "string") return { type: "text", value: a };
-      if (typeof a === "boolean") return { type: "integer", value: a ? 1 : 0 };
       if (a === null || a === undefined) return { type: "null" };
+      if (typeof a === "boolean") return { type: "integer", value: a ? 1 : 0 };
+      if (typeof a === "number") {
+        return Number.isInteger(a) ? { type: "integer", value: String(a) } : { type: "float", value: a };
+      }
       return { type: "text", value: String(a) };
     });
 
@@ -76,12 +77,17 @@ const db = {
     });
 
     const data = await response.json().catch(() => ({}));
-    const res = data.results?.[0];
-    if (!res || res.type === "error") {
-      throw new Error(res?.error?.message || "Database error: " + response.status);
+    if (!response.ok) {
+      const errDetail = data?.message || data?.error || data?.results?.[0]?.error?.message || ("HTTP " + response.status);
+      throw new Error("Turso: " + errDetail);
     }
 
-    const execResult = res.response?.result;
+    const res = data.results?.[0];
+    if (res?.type === "error") {
+      throw new Error(res?.error?.message || "Database statement error");
+    }
+
+    const execResult = res?.response?.result;
     const cols = execResult?.cols?.map(c => c.name) || [];
     const rows = (execResult?.rows || []).map(row => {
       const obj = {};
